@@ -11,7 +11,7 @@ int L, H, PN;
 
 void generateTextFile(){
     //Initializes Array of Locations
-    int loc[L+50];
+    int *loc = malloc( (L+50)*4);
     for(int i = 0; i < L+50; i++)
         loc[i] = 0;
     
@@ -36,7 +36,7 @@ void generateTextFile(){
     
     for(int i = 0; i < (L+50); i++){
         //Generates a random positive integer. 
-        randomNumber = rand(); 
+        randomNumber = rand() % 10000; 
 
         //If the corresponding index to the array is -1, place -1 in the file
         if(loc[i] == -1){
@@ -50,7 +50,7 @@ void generateTextFile(){
 
     //Close file.
     fclose(keys);
- 
+    free(loc);
 }
 
 int main(int argc, char* argv[]){
@@ -64,6 +64,31 @@ int main(int argc, char* argv[]){
     PN = atoi(argv[3]);
 
     generateTextFile();
+
+    int64_t avg;
+    int64_t count=0;
+
+    int keyCount = 0;
+    int max = 0; //Can be 0 since no negative ints aside from hidden keys.
+    FILE* file =  fopen("keys.txt", "r");
+    char* line = malloc(256);
+
+    while (fgets(line, sizeof(line), file)) {
+        if(atoi(line) > max)
+        max = atoi(line);
+
+        avg = avg + atoi(line);
+        if(keyCount < H && atoi(line) == -1){
+            printf("Found hidden key at index %ld\n", count);
+            keyCount++;
+        }
+        count++;
+    }
+    
+    fclose(file);
+
+    printf("Max: %d\nAverage: %ld\n", max, avg/(count));
+    free(line);
 
 
 }
