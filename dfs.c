@@ -65,89 +65,111 @@ int main(int argc, char* argv[]){
 
     generateTextFile();
 
-    int pid;
-    int root = getpid();
+    FILE* file =  fopen("keys.txt", "r");   
+    int* array = (malloc((L+50)*sizeof(int)));
+    char* line = malloc(256);
+    
+    for(int i = 0; i < (L+50); i++){
+        fgets(line, sizeof(line), file);
+        array[i] = atoi(line);
+    }
+    
+
+
     //INITIALIZING PIPES OF FOR PN PROCESSES
     int fd[2*(PN)];
-    for (int i = 0; i < (PN); i++) {
-    pipe(&fd[2*i]);
-    }
-    int start =0; 
-    int end;
-    int keyCount = 0;
-    int tempMax; 
-    int tempAvg; 
-    FILE* file =  fopen("keys.txt", "r");
+ 
+    int pid;
+    int start = 0;
+    int end = L+50;
+    int pos[H];
+    int parentRoot = getpid();
+    int returnArg = 1;
     //START THE DFS CHAIN! PARENT -> CHILD -> CHILD OF CHILD ETC.
     for (int i=0; i<PN; i++) 
     {
-        if(end == 0)
-        end = L/2;
 
-        else
-        end = end + end/2;
 
+        pipe(&fd[2*i]);
+        end = start+ (end-start)/2;
         pid = fork();
+        returnArg++;
         if (pid == -1) {  }
+
+        //CHILD PROCESS
         else if (pid == 0) {
+            printf("Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg, getppid());
             start = end;
-
-            read(fd[i*2], &keyCount, sizeof(int));
-            read(fd[i*2], &file, sizeof(file));
-           
-
-        }
-        else { // parent process (NO FORKING IN HERE!)
-            int64_t avg;
-            int64_t count=0;
-
-
-            int max = 0; //Can be 0 since no negative ints aside from hidden keys.
+            end = L+50;
             
-            char* line = malloc(256);
-            while (start != end && fgets(line, sizeof(line), file)) {
-                if(atoi(line) > max)
-                    max = atoi(line);
-
-                avg = avg + atoi(line);
-                if(keyCount < H && atoi(line) == -1){
-                    printf("Process %d Here! Found hidden key at index %d\n", getpid(), start);
-                    keyCount++;
+            if(i == (PN-1)){
+                close(fd[2*i]);
+                 int max = 0;
+                int64_t avg = 0;
+                int count = 0;
+                for(int j = start; j < end; j++){
+                    if (array[j] > max)
+                        max = array[j];
+                    avg += array[j];
+                        
                 }
-                count++;
-                start++;
+                avg = avg / (end - start);
+                count = end-start;
+                write(fd[2*i+1], &max, sizeof(int));
+                write(fd[2*i+1], &avg, sizeof(int64_t));
+                write(fd[2*i+1], &count, sizeof(int));
+                close(fd[2*i+1]);
+
+                exit(0);
+
             }
-            int c = getc(file);
-            write(fd[i*2+1], &keyCount, sizeof(int));
-            write(fd[i*2+1], &file, sizeof(file));
-            write(fd[i*2+1], &max, sizeof(int));
-            write(fd[i*2+1], &avg, sizeof(int));
-            
-            close(fd[i*2+1]);
-            fclose(file);
+        }
 
-            if(getpid() == (root +1)){
-            
-            read(fd[i*2], &tempMax, sizeof(int));
 
-            read(fd[i*2], &tempMax, sizeof(int));
+        else { // parent process (NO FORKING IN HERE!) Some ends need to be closed.
+            
+            int tempMax;
+            int64_t tempAvg;
+            int tempCount;
+            int max = 0;
+            int64_t avg = 0;
+            int count =0;
+            for(int j = start; j < end; j++){
+                    if (array[j] > max)
+                        max = array[j];
+                    avg += array[j];     
             }
-
-           close(fd[i*2]);
-            free(line);
-
-    
+            avg = avg / (end - start);
+            count = end - start;
+            
             wait(NULL);
-            if(root == getpid()){
-                
-                 printf("Max: %d\nAverage: %ld\n", max, avg/(count));
-            }
+            close(fd[2*i+1]);
 
+            read(fd[2*i], &tempMax, sizeof(int));
+            read(fd[2*i], &tempAvg, sizeof(int64_t));
+            read(fd[2*i], &tempCount, sizeof(int));
+
+            if(tempMax >= max){
+                max = tempMax;
+            }
+            avg = (avg*count + tempAvg * tempCount)/(tempCount+count);
+            if(parentRoot != getpid()){
+               
+            write(fd[2*(i-1)+1], &max, sizeof(int));
+            write(fd[2*(i-1)+1], &avg, sizeof(int64_t));
+            write(fd[2*(i-1)+1], &count, sizeof(int));
+            
+            }
+            
+            if(parentRoot == getpid()){
+                printf("Max: %d, Avg: %ld\n", max, avg);
+            }
             
             exit(0);
+            
         }
     }
-
+    
 
 
 
