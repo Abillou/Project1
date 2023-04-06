@@ -78,10 +78,10 @@ int main(int argc, char* argv[]){
 
     //INITIALIZING PIPES OF FOR PN PROCESSES
     int fd[2*(PN)];
- 
+    int bd[2*(PN)];
     int pid;
     int start = 0;
-    int end = L+50;
+    int end = (L+50)/PN;
     int pos[H];
     int parentRoot = getpid();
     int returnArg = 1;
@@ -91,19 +91,22 @@ int main(int argc, char* argv[]){
 
 
         pipe(&fd[2*i]);
-        end = start+ (end-start)/2;
+        pipe(&bd[2*i]);
+        
         pid = fork();
-        returnArg++;
+        
         if (pid == -1) {  }
 
         //CHILD PROCESS
         else if (pid == 0) {
-            printf("Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg, getppid());
+            close(fd[2*i]);
+            printf("Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg++, getppid());
             start = end;
-            end = L+50;
+            end = end+(L+50)/PN;
+            if(end > (L+50))
+            end = (L+50);
             
             if(i == (PN-1)){
-                close(fd[2*i]);
                  int max = 0;
                 int64_t avg = 0;
                 int count = 0;
@@ -120,6 +123,16 @@ int main(int argc, char* argv[]){
                 write(fd[2*i+1], &count, sizeof(int));
                 close(fd[2*i+1]);
 
+                read(bd[2*i], &H, sizeof(int));
+
+
+
+                for(int i = start; i < end; i++){
+                    if(H != 0 && array[i] == -1){
+                        printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);
+                        H--;
+                }
+                }
                 exit(0);
 
             }
@@ -127,7 +140,6 @@ int main(int argc, char* argv[]){
 
 
         else { // parent process (NO FORKING IN HERE!) Some ends need to be closed.
-            
             int tempMax;
             int64_t tempAvg;
             int tempCount;
@@ -142,8 +154,7 @@ int main(int argc, char* argv[]){
             avg = avg / (end - start);
             count = end - start;
             
-            wait(NULL);
-            close(fd[2*i+1]);
+            
 
             read(fd[2*i], &tempMax, sizeof(int));
             read(fd[2*i], &tempAvg, sizeof(int64_t));
@@ -162,9 +173,28 @@ int main(int argc, char* argv[]){
             }
             
             if(parentRoot == getpid()){
-                printf("Max: %d, Avg: %ld\n", max, avg);
+                printf("Max: %d, Avg: %ld\n\n", max, avg);
+                for(int i = start; i < end; i++){
+                    if(H != 0 && array[i] == -1){
+                        printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);
+                        H--;
+                    }
+                }
+
+                write(bd[2*i+1], &H, sizeof(int));
+                wait(NULL);
+                exit(0);
             }
             
+            read(bd[2*(i-1)], &H, sizeof(int));
+            for(int i = start; i < end; i++){
+            if(H != 0 && array[i] == -1){
+                 printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);
+                    H--;
+                }
+            }
+            write(bd[2*(i)+1], &H, sizeof(int));
+            wait(NULL);
             exit(0);
             
         }
