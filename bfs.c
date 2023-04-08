@@ -98,6 +98,8 @@ int main(int argc, char* argv[]){
 
 
     int pid;
+    int start = 0;
+    int end = L+50;
        //START THE BFS TREE
     for (int j=0; j<result; j++) 
     {
@@ -110,10 +112,19 @@ int main(int argc, char* argv[]){
             returnArg = 4*(returnArg)-3;
         }
         childMaker = getpid();
+        int increments;
+         increments = (end-start)/maxChildren;
+         end = start;
+         
         for(int i = 0; i < maxChildren; i++){
+            
+             
             
             if(childMaker == getpid() && returnArg < PN){
                 pid = fork();
+                if(i!=0)
+                    start = start+increments;
+                end = end+increments;   
                 returnArg = returnArg+1;
             }
             
@@ -126,6 +137,7 @@ int main(int argc, char* argv[]){
         else if (pid == 0) {
                 
                 printf("Process %d created by process %d with return code %d\n", getpid(), getppid(), returnArg);
+                printf("My start is %d and my end is %d\n",start,end);
                 pid = getpid();
                 if(j == (result-1))
                 exit(0);
