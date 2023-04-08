@@ -87,7 +87,7 @@ int main(int argc, char* argv[]){
 
 
     int pid;
-       //START THE DFS CHAIN! NODE -> CHILD -> CHILD OF CHILD -> CHILD OF CHILD OF CHILD ETC.
+       //START THE BFS TREE
     for (int j=0; j<result; j++) 
     {
         if(j!=0)
