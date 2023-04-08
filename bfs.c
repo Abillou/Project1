@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <time.h>  
 #include <stdbool.h>
+#include <math.h>
 int L, H, PN;
 
 void generateTextFile(){
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]){
     PN = atoi(argv[3]);
 
     generateTextFile();
-
+    
     FILE* file =  fopen("keys.txt", "r");   
     int* array = (malloc((L+50)*sizeof(int)));
     char* line = malloc(256);
@@ -73,23 +74,62 @@ int main(int argc, char* argv[]){
         fgets(line, sizeof(line), file);
         array[i] = atoi(line);
     }
+  int result = ceil(log2(PN)); 
+  int returnArg = 1;
+  printf("Level of tree: %d\n", result);
+    
+
+    //Makes N number of childs for Parent without Children making Processes.
+
+    //Idea: Try utilizing the level of the tree to make the processes!    
+
+       pid_t childMaker;
 
 
-    //Makes N number of childs for Parent without Children making Processes.    
-    pid_t childMaker;
+    int pid;
+       //START THE DFS CHAIN! NODE -> CHILD -> CHILD OF CHILD -> CHILD OF CHILD OF CHILD ETC.
+    for (int j=0; j<result; j++) 
+    {
+        if(j!=0)
+        returnArg = 2*returnArg-1;
+        childMaker = getpid();
+        for(int i = 0; i < 2; i++){
+            
+            if(childMaker == getpid()){
+                pid = fork();
+                returnArg = returnArg+1;
+            }
+            
+        }
 
-    childMaker = getpid();
+        
+        if (pid == -1) {  }
 
-    for(int i = 0; i < 2; i++)
-        if(childMaker == getpid())
-            fork();
+        //CHILD PROCESS
+        else if (pid == 0) {
+                
+                printf("Process %d created by process %d with return code %d\n", getpid(), getppid(), returnArg);
+                
+                if(j == (result-1))
+                exit(0);
+
+        
+        }
+        
+
+
+        else { // parent process (NO FORKING IN HERE TO KEEP CHAIN FORMAT!) Some ends need to be closed.
+
+
+                wait(NULL);
+                exit(0);
+            }
             
 
+            
+    }
     
-        
-    
-    
-
-
-
 }
+
+
+
