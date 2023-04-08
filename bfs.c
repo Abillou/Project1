@@ -95,10 +95,11 @@ int main(int argc, char* argv[]){
         childMaker = getpid();
         for(int i = 0; i < 2; i++){
             
-            if(childMaker == getpid()){
+            if(childMaker == getpid() && returnArg < PN){
                 pid = fork();
                 returnArg = returnArg+1;
             }
+            else{}
             
         }
 
@@ -109,7 +110,7 @@ int main(int argc, char* argv[]){
         else if (pid == 0) {
                 
                 printf("Process %d created by process %d with return code %d\n", getpid(), getppid(), returnArg);
-                
+                pid = getpid();
                 if(j == (result-1))
                 exit(0);
 
