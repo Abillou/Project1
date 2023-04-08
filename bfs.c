@@ -63,7 +63,18 @@ int main(int argc, char* argv[]){
     L = atoi(argv[1]);
     H = atoi(argv[2]);
     PN = atoi(argv[3]);
+    int maxChildren;
+    char* input = malloc(50);
+    printf("How Many Children (2, 3, 4)?\n");
+    scanf("%d",&maxChildren);//get input from user
 
+    if (maxChildren==0 || (maxChildren < 2) || maxChildren>5)//if the input is not a number......
+    {
+        printf("Invalid input entered\n\n");
+        return -1;
+    }
+    printf("\n");
+    
     generateTextFile();
     
     FILE* file =  fopen("keys.txt", "r");   
@@ -83,23 +94,28 @@ int main(int argc, char* argv[]){
 
     //Idea: Try utilizing the level of the tree to make the processes!    
 
-       pid_t childMaker;
+    pid_t childMaker;
 
 
     int pid;
        //START THE BFS TREE
     for (int j=0; j<result; j++) 
     {
-        if(j!=0)
-        returnArg = 2*returnArg-1;
+        if(j!=0){
+            if(maxChildren == 2)
+            returnArg = 2*(returnArg)-1;
+            else if(maxChildren == 3)
+            returnArg = 3*(returnArg)-2;
+            else
+            returnArg = 4*(returnArg)-3;
+        }
         childMaker = getpid();
-        for(int i = 0; i < 2; i++){
+        for(int i = 0; i < maxChildren; i++){
             
             if(childMaker == getpid() && returnArg < PN){
                 pid = fork();
                 returnArg = returnArg+1;
             }
-            else{}
             
         }
 
