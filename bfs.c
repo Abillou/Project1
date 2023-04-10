@@ -66,6 +66,10 @@ int main(int argc, char* argv[]){
     int maxChildren;
     int parentRoot = getpid();
     char* input = malloc(50);
+    int h[150];
+    for(int i =0; i < 150; i++)
+    h[i]= -1;
+    int hstart =0;
     printf("How Many Children (2, 3, 4)?\n");
     scanf("%d",&maxChildren);//get input from user
 
@@ -105,6 +109,7 @@ int main(int argc, char* argv[]){
     int childTrack[4] = {-1, -1, -1, -1};
     int parentPipe = -1;
     int oldEnd;
+    int returnCode;
     for (int j=0; j<result; j++) 
     {
         if(j!=0){
@@ -161,6 +166,7 @@ int main(int argc, char* argv[]){
             }
 
             printf("Process %d created by process %d with return code %d\n", getpid(), getppid(), returnArg);
+            returnCode = returnArg;
             pid = getpid();
             if(j == (result-1)){
                 int max = 0;
@@ -170,14 +176,25 @@ int main(int argc, char* argv[]){
                     if (array[j] > max)
                         max = array[j];
                     avg += array[j];
+
+                    if(array[j] == -1){
+                        h[hstart] = getpid();
+                        h[hstart+1] = j;
+                        h[hstart+2] = returnArg;
+                        hstart = hstart +3;
+                    }
                         
                 }
+
+
                 avg = avg / (end - start);
                 count = end-start;
                 close(fd[2*parentPipe]);
                 write(fd[2*parentPipe+1], &max, sizeof(int));
                 write(fd[2*parentPipe+1], &avg, sizeof(int64_t));
                 write(fd[2*parentPipe+1], &count, sizeof(int));
+                write(fd[2*parentPipe+1], &h, sizeof(int)*150);
+                write(fd[2*parentPipe+1], &hstart, sizeof(int));
                 close(fd[2*parentPipe+1]);
                 
             exit(0);
@@ -198,6 +215,9 @@ int main(int argc, char* argv[]){
                 int tempMax = -1;
                 int tempAvg = -1;
                 int tempCount = -1;
+                int tempH[150];
+
+                int tempHstart = 0;
                 for(int r = 0; r < maxChildren; r++){
                     if(childTrack[r] != -1){
                         hasChildren = true;
@@ -220,14 +240,23 @@ int main(int argc, char* argv[]){
                 
                 if(childCount == 0) //If process with no children end up here
                 {
+                   
                     for(int j = start; j < end; j++){
                         if (array[j] > max)
                             max = array[j];
                         avg += array[j];
-                            
+                        if(array[j] == -1){
+                        h[hstart] = getpid();
+                        h[hstart+1] = j;
+                        h[hstart+2] = returnArg;
+                        hstart = hstart +3;
+                    }
+                               
                     }
                     avg = avg / (end - start);
                     count = end-start;
+                    
+                    
                 }
 
                 else if(childCount < maxChildren) //If a process with not the max children ends up here
@@ -237,22 +266,39 @@ int main(int argc, char* argv[]){
                         if (array[j] > max)
                             max = array[j];
                         avg += array[j];
-                            
+                        if(array[j] == -1){
+                        h[hstart] = getpid();
+                        h[hstart+1] = j;
+                        h[hstart+2] = returnCode;
+                        hstart = hstart +3;
+                    }
+
                     }
                     avg = avg / (end - start);
                     count = end-start;
                     
                     for(int r = 0; r < childCount; r++){
+
                         //PIPE CALLED ONE
                         read(fd[2*childTrack[r]], &tempMax, sizeof(int));
                         read(fd[2*childTrack[r]], &tempAvg, sizeof(int64_t));
                         read(fd[2*childTrack[r]], &tempCount, sizeof(int));
-                    
+                        read(fd[2*childTrack[r]], &tempH, sizeof(int)*150);
+                        read(fd[2*childTrack[r]], &tempHstart, sizeof(int));
+            
                         if(tempMax >= max){
                             max = tempMax;
                         }
                         avg = (avg*count + tempAvg * tempCount)/(tempCount+count);
-                        count += tempCount; 
+                        count += tempCount;
+
+                        
+                        for(int i = 0; i < tempHstart; i++){
+                            h[hstart] = tempH[i];
+                            hstart++;
+                        } 
+                        
+                        
                     }
 
 
@@ -266,16 +312,27 @@ int main(int argc, char* argv[]){
                         read(fd[2*childTrack[r]], &tempMax, sizeof(int));
                         read(fd[2*childTrack[r]], &tempAvg, sizeof(int64_t));
                         read(fd[2*childTrack[r]], &tempCount, sizeof(int));
-                        
+                        read(fd[2*childTrack[r]], &tempH, sizeof(int)*150);
+                        read(fd[2*childTrack[r]], &tempHstart, sizeof(int));
                         if(tempMax >= max){
                             max = tempMax;
                         }
                        avg = (avg*count + tempAvg * tempCount)/(tempCount+count); 
+                       for(int i = 0; i < tempHstart; i++){
+                            h[hstart] = tempH[i];
+                            hstart++;
+                        } 
+                       
+                        
                         }
                         else{
                             read(fd[2*childTrack[r]], &max, sizeof(int));
                             read(fd[2*childTrack[r]], &avg, sizeof(int64_t));
                             read(fd[2*childTrack[r]], &count, sizeof(int));
+                            read(fd[2*childTrack[r]], &h, sizeof(int)*150);
+                            read(fd[2*childTrack[r]], &hstart, sizeof(int));
+
+                            
                         }
                         
                     }
@@ -287,12 +344,18 @@ int main(int argc, char* argv[]){
                     write(fd[2*parentPipe+1], &max, sizeof(int));
                     write(fd[2*parentPipe+1], &avg, sizeof(int64_t));
                     write(fd[2*parentPipe+1], &count, sizeof(int));
+                    write(fd[2*parentPipe+1], &h, sizeof(int)*150);
+                    write(fd[2*parentPipe+1], &hstart, sizeof(int));
                 }
 
                 else{
                     wait(NULL);
 
-                    printf("Max: %d, Avg: %ld\n", max, avg);
+                    printf("Max: %d, Avg: %ld\n\n", max, avg);
+                    for(int i = 0; i < H*3; i+=3){
+                        printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", h[i], h[i+2], h[i+1]);
+
+                    }
                 }
                 //printf("Parent Process %d: My start is %d and my end is %d\n", getpid(), start, end);
                 wait(NULL);
