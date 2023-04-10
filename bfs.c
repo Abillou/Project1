@@ -55,6 +55,8 @@ void generateTextFile(){
 }
 
 int main(int argc, char* argv[]){
+    double time_spent = 0.0;
+    clock_t begin = clock();
     if(argc != 4){
         printf("Not enough arguements");
         return -1;
@@ -356,6 +358,10 @@ int main(int argc, char* argv[]){
                         printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", h[i], h[i+2], h[i+1]);
 
                     }
+                    clock_t end = clock();
+                    time_spent += (double)(end-begin) / CLOCKS_PER_SEC;
+                    printf("\nThe program completed in %f seconds\n", (time_spent ));
+                    exit(0);
                 }
                 //printf("Parent Process %d: My start is %d and my end is %d\n", getpid(), start, end);
                 wait(NULL);

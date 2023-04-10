@@ -18,7 +18,7 @@ void generateTextFile(){
     int count = 0;
     srand(time(NULL));
     int randomNumber;
-    
+
     //Picks random indexs to be -1 (No Duplicates)
     while(count < 50){
         randomNumber =  (rand() % (L+50));
@@ -54,6 +54,8 @@ void generateTextFile(){
 }
 
 int main(int argc, char* argv[]){
+    double time_spent = 0.0;
+    clock_t begin = clock();
     if(argc != 4){
         printf("Not enough arguements");
         return -1;
@@ -245,6 +247,9 @@ int main(int argc, char* argv[]){
                 write(bd[2*i+1], &H, sizeof(int));
                 close(bd[2*i]+1);
                 wait(NULL);
+                clock_t end = clock();
+                time_spent += (double)(end-begin) / CLOCKS_PER_SEC;
+                printf("\nThe program completed in %f seconds\n", (time_spent ));
                 exit(0);
             }
             
