@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
     printf("How Many Children (2, 3, 4)?\n");
     scanf("%d",&maxChildren);//get input from user
 
-    if (maxChildren==0 || (maxChildren < 2) || maxChildren>5)//if the input is not a number......
+    if (maxChildren==0 || (maxChildren < 2) || maxChildren>=5)//if the input is not a number......
     {
         printf("Invalid input entered\n\n");
         return -1;
@@ -192,6 +192,7 @@ int main(int argc, char* argv[]){
                 bool hasChildren = false;
                 int childCount = 0;
                 int max = 0;
+                bool tracked = false;
                 int64_t avg = 0;
                 int count = 0;
                 int tempMax = -1;
@@ -203,9 +204,11 @@ int main(int argc, char* argv[]){
                         childCount++;
                     }
 
-                    else if(childTrack[r] == -1 && hasChildren){
+                    else if(childTrack[r] == -1 && hasChildren && !tracked){
                         start = end;
                         end = oldEnd;
+                        tracked = true;
+                        
                     }
                     
                 }
@@ -213,6 +216,7 @@ int main(int argc, char* argv[]){
                 if(!hasChildren){
                     end = oldEnd;
                 }
+
                 
                 if(childCount == 0) //If process with no children end up here
                 {
@@ -228,6 +232,7 @@ int main(int argc, char* argv[]){
 
                 else if(childCount < maxChildren) //If a process with not the max children ends up here
                 {
+
                     for(int j = start; j < end; j++){
                         if (array[j] > max)
                             max = array[j];
@@ -236,13 +241,13 @@ int main(int argc, char* argv[]){
                     }
                     avg = avg / (end - start);
                     count = end-start;
-
+                    
                     for(int r = 0; r < childCount; r++){
                         //PIPE CALLED ONE
                         read(fd[2*childTrack[r]], &tempMax, sizeof(int));
                         read(fd[2*childTrack[r]], &tempAvg, sizeof(int64_t));
                         read(fd[2*childTrack[r]], &tempCount, sizeof(int));
-
+                    
                         if(tempMax >= max){
                             max = tempMax;
                         }
@@ -250,15 +255,18 @@ int main(int argc, char* argv[]){
                         count += tempCount; 
                     }
 
+
                 }
 
                 else{
                     for(int r = 0; r < childCount; r++){
                         //PIPE CALLED TWO
                         if(r!=0){
+                            
                         read(fd[2*childTrack[r]], &tempMax, sizeof(int));
                         read(fd[2*childTrack[r]], &tempAvg, sizeof(int64_t));
                         read(fd[2*childTrack[r]], &tempCount, sizeof(int));
+                        
                         if(tempMax >= max){
                             max = tempMax;
                         }
