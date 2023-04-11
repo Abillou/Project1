@@ -16,6 +16,8 @@
         "string_view": "c",
         "initializer_list": "c",
         "bitset": "c",
-        "functional": "c"
+        "functional": "c",
+        "time.h": "c",
+        "signal.h": "c"
     }
 }
