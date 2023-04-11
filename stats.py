@@ -1,3 +1,10 @@
+"""
+This program is just to check the accuracy of the program
+we wrote in C to compute the average and max of all non-negative
+numbers in the file keys.txt.  This program reads the file keys.txt
+and computes the average and max of all non-negative numbers in the file.
+"""
+
 # Compute the average and max of all non-negative numbers in the file keys.txt
 # and print them out.
 
