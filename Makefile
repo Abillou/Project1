@@ -14,7 +14,8 @@ dfs: dfs.c
 	gcc -o dfs dfs.c
 
 clean:
-	rm -f singleProcess *.o bfs bfsSignal dfs
+	rm -f singleProcess *.o bfs bfsSignal dfs keys.txt output.txt
 
 pack:
+	rm -f Project1.tar
 	tar -cvf Project1.tar *.c *.h Makefile README.txt
