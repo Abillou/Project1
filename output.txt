@@ -1,0 +1,17 @@
+Hi I'm process 29646 with return arg 2 and my parent is 29643.
+Hi I'm process 29647 with return arg 3 and my parent is 29643.
+Hi I'm process 29648 with return arg 4 and my parent is 29646.
+Max: 9999, Avg: 4944
+
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[2800].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[2811].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[2847].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3308].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3534].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3636].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3786].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3805].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3947].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[3965].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[4233].
+Hi I am Process 29646 with return argument 4 and I found the hidden key at position A[4283].

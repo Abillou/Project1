@@ -39,11 +39,10 @@ void generateTextFile() {
     // If the corresponding index to the array is -1, place -1 in the file
     if (loc[i] == -1) {
       fputs("-1\n", keys);
-    }
-
-    // Otherwise, place the randomly generated number.
-    else
+    } else {
+      // Otherwise, place the randomly generated number.
       fprintf(keys, "%d\n", randomNumber);
+    }
   }
 
   // Close file.
@@ -71,9 +70,8 @@ int main(int argc, char* argv[]) {
   printf("How Many Children (2, 3, 4)?\n");
   scanf("%d", &maxChildren);  // get input from user
 
-  if (maxChildren == 0 || (maxChildren < 2) ||
-      maxChildren >= 5)  // if the input is not a number......
-  {
+  // if the input is not a number......
+  if (maxChildren == 0 || (maxChildren < 2) || maxChildren >= 5)  {
     printf("Invalid input entered\n\n");
     return -1;
   }
@@ -128,12 +126,12 @@ int main(int argc, char* argv[]) {
       if (childMaker == getpid() && returnArg < PN) {
         childCounter++;
 
-        for (int l = 0; l < maxChildren; l++)
+        for (int l = 0; l < maxChildren; l++) {
           if (childTrack[l] == -1) {
             childTrack[l] = returnArg - 1;
-
             break;
           }
+        }
 
         pipe(&fd[2 * (returnArg - 1)]);
         pid = fork();
@@ -146,10 +144,9 @@ int main(int argc, char* argv[]) {
     }
 
     if (pid == -1) {
-    }
-
-    // CHILD PROCESS
-    else if (pid == 0) {
+      perror("fork");
+    } else if (pid == 0) {
+      // CHILD PROCESS
       for (int l = 0; l < maxChildren; l++) {
         if (childTrack[l] != -1) {
           parentPipe = childTrack[l];
@@ -192,11 +189,9 @@ int main(int argc, char* argv[]) {
 
         exit(0);
       }
-
-    }
-
-    else {  // parent process (NO FORKING IN HERE TO KEEP CHAIN FORMAT!) Some
-            // ends need to be closed.
+    } else {  
+      // parent process (NO FORKING IN HERE TO KEEP CHAIN FORMAT!) Some
+      // ends need to be closed.
       bool hasChildren = false;
       int childCount = 0;
       int max = 0;
@@ -213,9 +208,7 @@ int main(int argc, char* argv[]) {
         if (childTrack[r] != -1) {
           hasChildren = true;
           childCount++;
-        }
-
-        else if (childTrack[r] == -1 && hasChildren && !tracked) {
+        } else if (childTrack[r] == -1 && hasChildren && !tracked) {
           start = end;
           end = oldEnd;
           tracked = true;
@@ -226,8 +219,8 @@ int main(int argc, char* argv[]) {
         end = oldEnd;
       }
 
-      if (childCount == 0)  // If process with no children end up here
-      {
+      // If process with no children end up here
+      if (childCount == 0) {
         for (int j = start; j < end; j++) {
           if (array[j] > max) max = array[j];
           avg += array[j];
@@ -240,12 +233,8 @@ int main(int argc, char* argv[]) {
         }
         avg = avg / (end - start);
         count = end - start;
-
-      }
-
-      else if (childCount < maxChildren)  // If a process with not the max
-                                          // children ends up here
-      {
+      } else if (childCount < maxChildren) {
+        // If a process with not the max children ends up here
         for (int j = start; j < end; j++) {
           if (array[j] > max) max = array[j];
           avg += array[j];
@@ -278,10 +267,7 @@ int main(int argc, char* argv[]) {
             hstart++;
           }
         }
-
-      }
-
-      else {
+      } else {
         for (int r = 0; r < childCount; r++) {
           // PIPE CALLED TWO
           if (r != 0) {
@@ -298,7 +284,6 @@ int main(int argc, char* argv[]) {
               h[hstart] = tempH[i];
               hstart++;
             }
-
           } else {
             read(fd[2 * childTrack[r]], &max, sizeof(int));
             read(fd[2 * childTrack[r]], &avg, sizeof(int64_t));
@@ -316,9 +301,7 @@ int main(int argc, char* argv[]) {
         write(fd[2 * parentPipe + 1], &count, sizeof(int));
         write(fd[2 * parentPipe + 1], &h, sizeof(int) * 150);
         write(fd[2 * parentPipe + 1], &hstart, sizeof(int));
-      }
-
-      else {
+      } else {
         wait(NULL);
         output = fopen("output.txt", "a+");
         printf("Max: %d, Avg: %ld\n\n", max, avg);
@@ -339,8 +322,6 @@ int main(int argc, char* argv[]) {
         printf("\nThe program completed in %f seconds\n", (time_spent));
         exit(0);
       }
-      // printf("Parent Process %d: My start is %d and my end is %d\n",
-      // getpid(), start, end);
       wait(NULL);
       exit(0);
     }

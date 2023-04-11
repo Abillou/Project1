@@ -9,34 +9,6 @@
 #include <time.h>
 #include <unistd.h>
 int L, H, PN;
-bool ran = false;
-void sighandler(int signum) { ran = true; }
-void sighandler2(int signum) { ran = false; }
-void kill_tree(pid_t pid, int signal) {
-  pid_t child;
-  int status;
-
-  // Send the signal to the current process
-  printf("Killed %d\n", pid);
-  kill(pid, signal);
-
-  // Recursively send the signal to child processes
-  while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
-    if (WIFEXITED(status)) {
-      printf("Process %d exited with status %d\n", child, WEXITSTATUS(status));
-    } else if (WIFSIGNALED(status)) {
-      printf("Process %d killed by signal %d\n", child, WTERMSIG(status));
-    } else {
-      printf("Process %d exited with unknown status\n", child);
-    }
-
-    if (WIFSTOPPED(status) || WIFCONTINUED(status)) {
-      // Child process is stopped or continued, skip it
-      continue;
-    }
-    kill_tree(child, signal);
-  }
-}
 
 void generateTextFile() {
   // Initializes Array of Locations
@@ -110,11 +82,10 @@ int main(int argc, char* argv[]) {
   generateTextFile();
 
   FILE* file = fopen("keys.txt", "r");
-  FILE* output;
-  fclose(fopen("output.txt", "w"));
   int* array = (malloc((L + 50) * sizeof(int)));
   char* line = malloc(256);
-
+  FILE* output;
+  fclose(fopen("output.txt", "w"));
   for (int i = 0; i < (L + 50); i++) {
     fgets(line, sizeof(line), file);
     array[i] = atoi(line);
@@ -123,7 +94,6 @@ int main(int argc, char* argv[]) {
   int returnArg = 1;
 
   // Makes N number of childs for Parent without Children making Processes.
-
   // Idea: Try utilizing the level of the tree to make the processes!
 
   pid_t childMaker;
@@ -157,12 +127,12 @@ int main(int argc, char* argv[]) {
       if (childMaker == getpid() && returnArg < PN) {
         childCounter++;
 
-        for (int l = 0; l < maxChildren; l++)
+        for (int l = 0; l < maxChildren; l++) {
           if (childTrack[l] == -1) {
             childTrack[l] = returnArg - 1;
-
             break;
           }
+        }
 
         pipe(&fd[2 * (returnArg - 1)]);
         pid = fork();
@@ -175,6 +145,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (pid == -1) {
+      perror("fork");
     }
 
     // CHILD PROCESS
@@ -185,7 +156,6 @@ int main(int argc, char* argv[]) {
           childTrack[l] = -1;
         }
       }
-
       output = fopen("output.txt", "a+");
       printf("Hi I'm process %d with return arg %d and my parent is %d.\n",
              getpid(), returnArg, getppid());
@@ -196,41 +166,32 @@ int main(int argc, char* argv[]) {
       pid = getpid();
       if (j == (result - 1)) {
         int max = 0;
-        int64_t avg = 0;
+        double avg = 0;
         int count = 0;
         for (int j = start; j < end; j++) {
           if (array[j] > max) max = array[j];
-          avg += array[j];
 
           if (array[j] == -1) {
             h[hstart] = getpid();
             h[hstart + 1] = j;
             h[hstart + 2] = returnCode;
             hstart = hstart + 3;
+          } else {
+            avg += array[j];
+            count++;
           }
         }
 
-        avg = avg / (end - start);
-        count = end - start;
-        pid_t childPID = getpid();
+        avg = avg / (double)(count);
         close(fd[2 * parentPipe]);
         write(fd[2 * parentPipe + 1], &max, sizeof(int));
-        write(fd[2 * parentPipe + 1], &avg, sizeof(int64_t));
+        write(fd[2 * parentPipe + 1], &avg, sizeof(double));
         write(fd[2 * parentPipe + 1], &count, sizeof(int));
         write(fd[2 * parentPipe + 1], &h, sizeof(int) * 150);
         write(fd[2 * parentPipe + 1], &hstart, sizeof(int));
-        write(fd[2 * parentPipe + 1], &childPID, sizeof(pid_t));
         close(fd[2 * parentPipe + 1]);
 
-        signal(SIGCONT, &sighandler);
-        signal(SIGALRM, &sighandler2);
-        raise(SIGTSTP);
-        sleep(2);
-
-        if (ran) sleep(100);
-        if (!ran) sleep(20);
-
-        exit(returnCode);
+        exit(0);
       }
 
     }
@@ -241,7 +202,7 @@ int main(int argc, char* argv[]) {
       int childCount = 0;
       int max = 0;
       bool tracked = false;
-      int64_t avg = 0;
+      double avg = 0;
       int count = 0;
       int tempMax = -1;
       int tempAvg = -1;
@@ -268,19 +229,20 @@ int main(int argc, char* argv[]) {
 
       if (childCount == 0)  // If process with no children end up here
       {
+        count = 0;
         for (int j = start; j < end; j++) {
           if (array[j] > max) max = array[j];
-          avg += array[j];
           if (array[j] == -1) {
             h[hstart] = getpid();
             h[hstart + 1] = j;
             h[hstart + 2] = returnCode;
             hstart = hstart + 3;
+          } else {
+            avg += array[j];
+            count++;
           }
         }
-        avg = avg / (end - start);
-        count = end - start;
-
+        avg = avg / (double)(count);
       }
 
       else if (childCount < maxChildren)  // If a process with not the max
@@ -288,131 +250,83 @@ int main(int argc, char* argv[]) {
       {
         for (int j = start; j < end; j++) {
           if (array[j] > max) max = array[j];
-          avg += array[j];
           if (array[j] == -1) {
             h[hstart] = getpid();
             h[hstart + 1] = j;
             h[hstart + 2] = returnCode;
             hstart = hstart + 3;
+          } else {
+            avg += array[j];
+            count++;
           }
         }
-        avg = avg / (end - start);
-        count = end - start;
+        avg = avg / (double)(count);
 
         for (int r = 0; r < childCount; r++) {
           // PIPE CALLED ONE
-          pid_t tempPID;
           read(fd[2 * childTrack[r]], &tempMax, sizeof(int));
-          read(fd[2 * childTrack[r]], &tempAvg, sizeof(int64_t));
+          read(fd[2 * childTrack[r]], &tempAvg, sizeof(double));
           read(fd[2 * childTrack[r]], &tempCount, sizeof(int));
           read(fd[2 * childTrack[r]], &tempH, sizeof(int) * 150);
           read(fd[2 * childTrack[r]], &tempHstart, sizeof(int));
-          read(fd[2 * childTrack[r]], &tempPID, sizeof(int));
 
           if (tempMax >= max) {
             max = tempMax;
-            kill(tempPID, SIGCONT);
-          } else if ((tempHstart + 1) / 3 >= H) {
-            kill_tree(tempPID, SIGKILL);
-          } else {
-            kill(tempPID, SIGCONT);
-            sleep(2);
-            kill(tempPID, SIGALRM);
           }
-          avg = (avg * count + tempAvg * tempCount) / (tempCount + count);
+          avg =
+              (avg * count + tempAvg * tempCount) / (double)(tempCount + count);
           count += tempCount;
 
-          if (tempHstart >= 2) {
-            for (int i = 0; i < 3; i++) {
-              h[hstart] = tempH[i];
-              hstart++;
-            }
+          for (int i = 0; i < tempHstart; i++) {
+            h[hstart] = tempH[i];
+            hstart++;
           }
         }
-
       }
 
       else {
-        pid_t tempPID;
-        pid_t tempPID2;
-        int tracker;
         for (int r = 0; r < childCount; r++) {
           // PIPE CALLED TWO
           if (r != 0) {
             read(fd[2 * childTrack[r]], &tempMax, sizeof(int));
-            read(fd[2 * childTrack[r]], &tempAvg, sizeof(int64_t));
+            read(fd[2 * childTrack[r]], &tempAvg, sizeof(double));
             read(fd[2 * childTrack[r]], &tempCount, sizeof(int));
             read(fd[2 * childTrack[r]], &tempH, sizeof(int) * 150);
             read(fd[2 * childTrack[r]], &tempHstart, sizeof(int));
-            read(fd[2 * childTrack[r]], &tempPID2, sizeof(pid_t));
-
             if (tempMax >= max) {
               max = tempMax;
-
-              if ((tracker + 1) / 3 >= H)
-                kill_tree(tempPID, SIGKILL);
-
-              else {
-                kill(tempPID, SIGCONT);
-                sleep(2);
-                kill(tempPID, SIGALRM);
-              }
-
-              tempPID = tempPID2;
-              tracker = tempHstart;
-            } else if ((tempHstart + 1) / 3 >= H)
-              kill(tempPID2, SIGKILL);
-
-            else {
-              kill(tempPID, SIGCONT);
-              sleep(2);
-
-              kill(tempPID, SIGALRM);
             }
-            avg = (avg * count + tempAvg * tempCount) / (tempCount + count);
-            if (tempHstart >= 2) {
-              for (int i = 0; i < 3; i++) {
-                h[hstart] = tempH[i];
-                hstart++;
-              }
+            avg = (avg * count + tempAvg * tempCount) /
+                  (double)(tempCount + count);
+            for (int i = 0; i < tempHstart; i++) {
+              h[hstart] = tempH[i];
+              hstart++;
             }
-
           } else {
             read(fd[2 * childTrack[r]], &max, sizeof(int));
-            read(fd[2 * childTrack[r]], &avg, sizeof(int64_t));
+            read(fd[2 * childTrack[r]], &avg, sizeof(double));
             read(fd[2 * childTrack[r]], &count, sizeof(int));
-            read(fd[2 * childTrack[r]], &tempH, sizeof(int) * 150);
-            read(fd[2 * childTrack[r]], &tempHstart, sizeof(int));
-            read(fd[2 * childTrack[r]], &tempPID, sizeof(pid_t));
-            if (tempHstart >= 2) {
-              for (int i = 0; i < 3; i++) {
-                h[hstart] = tempH[i];
-                hstart++;
-              }
-            }
-            tracker = hstart;
+            read(fd[2 * childTrack[r]], &h, sizeof(int) * 150);
+            read(fd[2 * childTrack[r]], &hstart, sizeof(int));
           }
         }
-        kill(tempPID, SIGCONT);
       }
 
       if (parentRoot != getpid()) {
         // PIPE CALLED THREE
-        pid_t childPID = getpid();
         write(fd[2 * parentPipe + 1], &max, sizeof(int));
-        write(fd[2 * parentPipe + 1], &avg, sizeof(int64_t));
+        write(fd[2 * parentPipe + 1], &avg, sizeof(double));
         write(fd[2 * parentPipe + 1], &count, sizeof(int));
         write(fd[2 * parentPipe + 1], &h, sizeof(int) * 150);
         write(fd[2 * parentPipe + 1], &hstart, sizeof(int));
-        write(fd[2 * parentPipe + 1], &childPID, sizeof(pid_t));
       }
 
       else {
         wait(NULL);
         output = fopen("output.txt", "a+");
-        printf("Max: %d, Avg: %lld\n\n", max, avg);
-        fprintf(output, "Max: %d, Avg: %lld\n\n", max, avg);
-        for (int i = 0; i < maxChildren * 3; i += 3) {
+        printf("Max: %d, Avg: %f\n\n", max, avg);
+        fprintf(output, "Max: %d, Avg: %f\n\n", max, avg);
+        for (int i = 0; i < H * 3; i += 3) {
           printf(
               "Hi I am Process %d with return argument %d and I found the "
               "hidden key at position A[%d].\n",
@@ -430,14 +344,8 @@ int main(int argc, char* argv[]) {
       }
       // printf("Parent Process %d: My start is %d and my end is %d\n",
       // getpid(), start, end);
-      signal(SIGCONT, &sighandler);
-      signal(SIGALRM, &sighandler2);
-      raise(SIGTSTP);
-      sleep(2);
-      if (ran) sleep(100);
-      if (!ran) sleep(20);
-
-      exit(returnCode);
+      wait(NULL);
+      exit(0);
     }
   }
 }

@@ -62,6 +62,8 @@ int main(int argc, char* argv[]) {
   H = atoi(argv[2]);
   PN = atoi(argv[3]);
 
+  // generate text file of L integers and 50 randomly placed -1's
+  // the -1's represent the keys
   generateTextFile();
 
   FILE* file = fopen("keys.txt", "r");
@@ -98,6 +100,7 @@ int main(int argc, char* argv[]) {
     pid = fork();
 
     if (pid == -1) {
+      perror("fork");
     }
 
     // CHILD PROCESS
@@ -128,16 +131,19 @@ int main(int argc, char* argv[]) {
         close(fd[2 * i]);
         close(bd[2 * i] + 1);
         int max = 0;
-        int64_t avg = 0;
+        double avg = 0;
         int count = 0;
         for (int j = start; j < end; j++) {
+          // exclude negative numbers that were read in
+          if (array[j] < 0) continue;
+
           if (array[j] > max) max = array[j];
           avg += array[j];
+          count++;
         }
-        avg = avg / (end - start);
-        count = end - start;
+        avg = avg / (double)(count);
         write(fd[2 * i + 1], &max, sizeof(int));
-        write(fd[2 * i + 1], &avg, sizeof(int64_t));
+        write(fd[2 * i + 1], &avg, sizeof(double));
         write(fd[2 * i + 1], &count, sizeof(int));
         close(fd[2 * i + 1]);
 
@@ -166,48 +172,42 @@ int main(int argc, char* argv[]) {
     else {  // parent process (NO FORKING IN HERE TO KEEP CHAIN FORMAT!) Some
             // ends need to be closed.
       int tempMax;
-      int64_t tempAvg;
+      double tempAvg;
       int tempCount;
       int max = 0;
-      int64_t avg = 0;
+      double avg = 0;
       int count = 0;
 
       // IF NOT THE START OF THE CHAIN
       if (parentRoot != getpid()) {
-        // CHAIN LOOKS LIKE
-
-        //           ----   PIPE TO WRITE TO PARENT --------          ---- PIPE
-        //           TO WRITE TO CHILD -------- | |       | |
-        //   ------PREV---------------------------------CURRENT PROCESS
-        //   ------------------------------------NEXT---------
-        //           |                                       |       | |
-        //           ----  PIPE TO READ FROM PARENT --------         ----  PIPE
-        //           TO READ FROM CHILD --------
-        // FOR VISUALIZATION
         close(fd[2 * i] + 1);
         close(fd[2 * (i - 1)]);
         close(bd[2 * (i)]);
         close(bd[2 * (i - 1) + 1]);
 
+        count = 0;
         for (int j = start; j < end; j++) {
+          // exclude negative numbers that were read in
+          if (array[j] < 0) continue;
+
           if (array[j] > max) max = array[j];
           avg += array[j];
+          count++;
         }
-        avg = avg / (end - start);
-        count = end - start;
+        avg = avg / (double)(count);
 
         read(fd[2 * i], &tempMax, sizeof(int));
-        read(fd[2 * i], &tempAvg, sizeof(int64_t));
+        read(fd[2 * i], &tempAvg, sizeof(double));
         read(fd[2 * i], &tempCount, sizeof(int));
         close(fd[2 * i]);
 
         if (tempMax >= max) {
           max = tempMax;
         }
-        avg = (avg * count + tempAvg * tempCount) / (tempCount + count);
+        avg = (avg * count + tempAvg * tempCount) / (double)(tempCount + count);
 
         write(fd[2 * (i - 1) + 1], &max, sizeof(int));
-        write(fd[2 * (i - 1) + 1], &avg, sizeof(int64_t));
+        write(fd[2 * (i - 1) + 1], &avg, sizeof(double));
         write(fd[2 * (i - 1) + 1], &count, sizeof(int));
         close(fd[2 * (i - 1) + 1]);
 
@@ -239,7 +239,6 @@ int main(int argc, char* argv[]) {
       // THE START OF THE CHAIN
       else {
         // CHAIN LOOKS LIKE
-
         //           ----   PIPE TO WRITE TO CHILD --------
         //           |                                       |
         //  CURRENT PROCESS---------------------------------NEXT PROCESS
@@ -249,13 +248,13 @@ int main(int argc, char* argv[]) {
         close(bd[2 * i]);
         close(fd[2 * i + 1]);
         read(fd[2 * i], &max, sizeof(int));
-        read(fd[2 * i], &avg, sizeof(int64_t));
+        read(fd[2 * i], &avg, sizeof(double));
         read(fd[2 * i], &count, sizeof(int));
         close(fd[2 * i]);
         output = fopen("output.txt", "a+");
-        fprintf(output, "Max: %d, Avg: %ld\n\n", max, avg);
+        fprintf(output, "Max: %d, Avg: %f\n\n", max, avg);
         fclose(output);
-        printf("Max: %d, Avg: %ld\n\n", max, avg);
+        printf("Max: %d, Avg: %f\n\n", max, avg);
         write(bd[2 * i + 1], &H, sizeof(int));
         close(bd[2 * i] + 1);
         wait(NULL);
