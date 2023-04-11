@@ -12,7 +12,7 @@ int L, H, PN;
 bool ran = false;
 void sighandler(int signum){
 
-    sleep(100);
+    
     ran =true;
 }
 void sighandler2(int signum){
@@ -237,11 +237,13 @@ int main(int argc, char* argv[]){
                 write(fd[2*parentPipe+1], &childPID, sizeof(pid_t));
                 close(fd[2*parentPipe+1]);
                 
-                signal(SIGUSR1, &sighandler);
-                signal(SIGUSR2, &sighandler2);
+                signal(SIGCONT, &sighandler);
+                signal(SIGALRM, &sighandler2);
                 raise(SIGTSTP);
-
-                sleep(5);
+                sleep(2);
+                
+                if(ran)
+                sleep(100);
                 if(!ran)
                 sleep(20);
                 
@@ -339,8 +341,6 @@ int main(int argc, char* argv[]){
                         if(tempMax >= max){
                             max = tempMax;
                             kill(tempPID, SIGCONT);
-                            sleep(2);
-                            kill(tempPID, SIGUSR1);
                         }
                         else if((tempHstart+1)/3 >= H){
                             kill_tree(tempPID, SIGKILL);
@@ -348,7 +348,7 @@ int main(int argc, char* argv[]){
                         else{
                             kill(tempPID, SIGCONT);
                             sleep(2);
-                            kill(tempPID, SIGUSR2);
+                            kill(tempPID, SIGALRM);
                         }
                         avg = (avg*count + tempAvg * tempCount)/(tempCount+count);
                         count += tempCount;
@@ -391,7 +391,7 @@ int main(int argc, char* argv[]){
                             else{
                                 kill(tempPID, SIGCONT);
                                 sleep(2);
-                                kill(tempPID, SIGUSR2);
+                                kill(tempPID, SIGALRM);
                             }
 
                             tempPID = tempPID2;
@@ -404,7 +404,7 @@ int main(int argc, char* argv[]){
                             kill(tempPID, SIGCONT);
                              sleep(2);
 
-                            kill(tempPID, SIGUSR2);
+                            kill(tempPID, SIGALRM);
                         }
                        avg = (avg*count + tempAvg * tempCount)/(tempCount+count); 
                        if(tempHstart>=2){
@@ -435,8 +435,7 @@ int main(int argc, char* argv[]){
                         
                     }
                     kill(tempPID, SIGCONT);
-                    sleep(2);
-                    kill(tempPID, SIGUSR1);
+                    
                 }
 
                 if(parentRoot != getpid()){
@@ -465,11 +464,12 @@ int main(int argc, char* argv[]){
                     exit(0);
                 }
                 //printf("Parent Process %d: My start is %d and my end is %d\n", getpid(), start, end);
-                signal(SIGUSR1, &sighandler);
-                signal(SIGUSR2, &sighandler2);
+                signal(SIGCONT, &sighandler);
+                signal(SIGALRM, &sighandler2);
                 raise(SIGTSTP);
-                
-                sleep(5);
+                sleep(2);
+                if(ran)
+                sleep(100);
                 if(!ran)
                 sleep(20);
 
