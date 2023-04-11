@@ -184,6 +184,8 @@ int main(int argc, char* argv[]){
                 if((L+50)-end < 5)
                 end = L+50;   
                 returnArg = returnArg+1;
+                returnCode = returnArg;
+
             }
  
             
@@ -204,7 +206,6 @@ int main(int argc, char* argv[]){
             }
 
             printf("Process %d created by process %d with return code %d\n", getpid(), getppid(), returnArg);
-            returnCode = returnArg;
             pid = getpid();
             if(j == (result-1)){
                 int max = 0;
