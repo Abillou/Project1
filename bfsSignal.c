@@ -120,7 +120,9 @@ int main(int argc, char* argv[]){
     
     generateTextFile();
     
-    FILE* file =  fopen("keys.txt", "r");   
+    FILE* file =  fopen("keys.txt", "r");  
+    FILE* output; 
+    fclose(fopen("output.txt", "w")); 
     int* array = (malloc((L+50)*sizeof(int)));
     char* line = malloc(256);
     
@@ -205,7 +207,10 @@ int main(int argc, char* argv[]){
             }
             }
 
-            printf("Process %d created by process %d with return code %d\n", getpid(), getppid(), returnArg);
+            output = fopen("output.txt", "a+");
+            printf("Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg, getppid());
+            fprintf(output,"Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg, getppid());
+            fclose(output);
             pid = getpid();
             if(j == (result-1)){
                 int max = 0;
@@ -453,12 +458,15 @@ int main(int argc, char* argv[]){
 
                 else{
                     wait(NULL);
-
+                    output = fopen("output.txt", "a+");
                     printf("Max: %d, Avg: %ld\n\n", max, avg);
+                    fprintf(output,"Max: %d, Avg: %ld\n\n", max, avg);
                     for(int i = 0; i < maxChildren*3; i+=3){
                         printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", h[i], h[i+2], h[i+1]);
+                        fprintf(output,"Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", h[i], h[i+2], h[i+1]);
 
                     }
+                    fclose(output);
                     clock_t end = clock();
                     time_spent += (double)(end-begin) / CLOCKS_PER_SEC;
                     printf("\nThe program completed in %f seconds\n", (time_spent ));

@@ -1,0 +1,6 @@
+Hi I'm process 3428264 with return arg 2 and my parent is 3428262.
+Hi I'm process 3428265 with return arg 3 and my parent is 3428262.
+Max: 9999, Avg: 4957
+
+Hi I am Process 3428264 with return argument 2 and I found the hidden key at position A[219].
+Hi I am Process 3428265 with return argument 3 and I found the hidden key at position A[5252].

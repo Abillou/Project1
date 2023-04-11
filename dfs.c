@@ -67,7 +67,9 @@ int main(int argc, char* argv[]){
 
     generateTextFile();
 
-    FILE* file =  fopen("keys.txt", "r");   
+    FILE* file =  fopen("keys.txt", "r");  
+    FILE* output; 
+    fclose(fopen("output.txt", "w"));
     int* array = (malloc((L+50)*sizeof(int)));
     char* line = malloc(256);
     
@@ -106,8 +108,10 @@ int main(int argc, char* argv[]){
         //CHILD PROCESS
         else if (pid == 0) {
 
- 
+            output = fopen("output.txt", "a+");
             printf("Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg+1, getppid());
+            fprintf(output,"Hi I'm process %d with return arg %d and my parent is %d.\n", getpid(), returnArg+1, getppid());
+            fclose(output);
             returnArg++;
             start = end;
             end = end+(L+50)/PN;
@@ -147,13 +151,16 @@ int main(int argc, char* argv[]){
                 close(bd[2*i]);
 
 
-
+                output = fopen("output.txt", "a+");
                 for(int i = start; i < end; i++){
                     if(H != 0 && array[i] == -1){
+                       
                         printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);
+                        fprintf(output,"Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);
                         H--;
                 }
                 }
+                fclose(output);
                 exit(0);
 
             }
@@ -212,13 +219,15 @@ int main(int argc, char* argv[]){
             read(bd[2*(i-1)], &H, sizeof(int));
             close(bd[2*(i-1)]);
 
+            output = fopen("output.txt", "a+");
             for(int i = start; i < end; i++){
                 if(H != 0 && array[i] == -1){
                     printf("Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);
+                    fprintf(output,"Hi I am Process %d with return argument %d and I found the hidden key at position A[%d].\n", getpid(), returnArg, i);                    
                     H--;
                 }
             }
-             
+            fclose(output);
             write(bd[2*(i)+1], &H, sizeof(int));
             close(bd[2*(i)+1]);
             wait(NULL);
@@ -243,6 +252,9 @@ int main(int argc, char* argv[]){
                 read(fd[2*i], &avg, sizeof(int64_t));
                 read(fd[2*i], &count, sizeof(int));
                 close(fd[2*i]);
+                output = fopen("output.txt", "a+");
+                fprintf(output,"Max: %d, Avg: %ld\n\n", max, avg);
+                fclose(output);
                 printf("Max: %d, Avg: %ld\n\n", max, avg);
                 write(bd[2*i+1], &H, sizeof(int));
                 close(bd[2*i]+1);

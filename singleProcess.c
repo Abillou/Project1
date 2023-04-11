@@ -73,6 +73,8 @@ int main(int argc, char* argv[]){
     FILE* file =  fopen("keys.txt", "r");
     char* line = malloc(256);
 
+    FILE *output;
+    output = fopen("output.txt", "a+");
     while (fgets(line, sizeof(line), file)) {
         if(atoi(line) > max)
         max = atoi(line);
@@ -80,6 +82,7 @@ int main(int argc, char* argv[]){
         avg = avg + atoi(line);
         if(keyCount < H && atoi(line) == -1){
             printf("Found hidden key at index %ld\n", count);
+            fprintf(output, "Hi I am process %d with return arg 1. I found the hidden key in position A[%ld].\n", getpid(), count);
             keyCount++;
         }
         count++;
@@ -88,6 +91,8 @@ int main(int argc, char* argv[]){
     fclose(file);
 
     printf("Max: %d\nAverage: %ld\n", max, avg/(count));
+    fprintf(output, "Max: %d\nAverage: %ld\n", max, avg/(count));
+    fclose(output);
     free(line);
 
 
